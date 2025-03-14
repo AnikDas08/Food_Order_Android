@@ -22,6 +22,8 @@ There is two parts of this application.First is User Application(main branch) an
   - Room (Local Database for cart items)
   - Glide (Image loading)
   - MVVM (Architecture pattern)
+  - Coroutines(for asynchronous programming)
+  - Material Design (UI components)
 
 ## 🚀User Functionality
 ### 1. User Registration and Login
