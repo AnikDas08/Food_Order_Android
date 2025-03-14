@@ -45,5 +45,5 @@ There is two parts of this application.First is User Application(main branch) an
 - **Track Order Status**: Users can view the real-time status of their orders, including processing, dispatched, and delivered.
 
 ## 🧑‍💼 Contact
-email : anikd5656@gmail.com
-number : 01771119085
+- email : anikd5656@gmail.com
+- number : 01771119085
