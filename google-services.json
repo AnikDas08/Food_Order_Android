@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "689190450444",
+    "firebase_url": "https://fir-insert-72320-default-rtdb.firebaseio.com",
+    "project_id": "fir-insert-72320",
+    "storage_bucket": "fir-insert-72320.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:689190450444:android:c9555b0d6f6e5190424529",
+        "android_client_info": {
+          "package_name": "com.example.kotlinadmin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlRFXUm27ncSunrPuV5z9zDvNdxhOqptQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
