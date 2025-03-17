@@ -12,8 +12,11 @@ import com.example.foodatdoor.model.UserInformation
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 
 
 class ProfilekFragment : Fragment() {
@@ -22,6 +25,7 @@ class ProfilekFragment : Fragment() {
     lateinit var address:String
     lateinit var email:String
     lateinit var phone:String
+    var isEditable = false
     lateinit var auth:FirebaseAuth
     lateinit var database:DatabaseReference
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,64 +42,87 @@ class ProfilekFragment : Fragment() {
         auth=FirebaseAuth.getInstance()
         database=FirebaseDatabase.getInstance().reference
 
-        binding.SaveInformation.isEnabled=false
-        binding.NameEdit.isEnabled=false
-        binding.AddressEdit.isEnabled=false
-        binding.EmailEdit.isEnabled=false
-        binding.PhoneEdit.isEnabled=false
-        var isEnable=false
+        disableEditing()
 
-        binding.textView24.setOnClickListener(View.OnClickListener {
-            isEnable=!isEnable
-            binding.NameEdit.isEnabled=isEnable
-            binding.AddressEdit.isEnabled=isEnable
-            binding.EmailEdit.isEnabled=isEnable
-            binding.PhoneEdit.isEnabled=isEnable
-            binding.SaveInformation.isEnabled=isEnable
-            if(isEnable){
-                binding.SaveInformation.setOnClickListener(View.OnClickListener {
+        loadUserData()
 
-                    name=binding.NameEdit.text.toString()
-                    email=binding.EmailEdit.text.toString()
-                    address=binding.AddressEdit.text.toString()
-                    phone=binding.PhoneEdit.text.toString()
+        binding.textView24.setOnClickListener {
+            isEditable = !isEditable
+            toggleEditMode(isEditable)
+        }
 
-                    val newId=FirebaseAuth.getInstance().currentUser!!.uid
-                    val user=UserInformation(name,address,email,phone)
-                    database.child("user").child(newId).child("userInformation").setValue(user).addOnSuccessListener {
-                        Toast.makeText(requireContext(),"Information Save",Toast.LENGTH_SHORT).show()
-                    }
-                        .addOnFailureListener(OnFailureListener {
-                            Toast.makeText(requireContext(),"Information Failed",Toast.LENGTH_SHORT).show()
-                        })
-                })
-                binding.NameEdit.requestFocus()
+        binding.SaveInformation.setOnClickListener {
+            name = binding.NameEdit.text.toString()
+            email = binding.EmailEdit.text.toString()
+            address = binding.AddressEdit.text.toString()
+            phone = binding.PhoneEdit.text.toString()
+
+            if (name.isEmpty() || address.isEmpty() || email.isEmpty() || phone.isEmpty()) {
+                Toast.makeText(requireContext(), "All fields are required", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
-        })
 
+            val userId = FirebaseAuth.getInstance().currentUser!!.uid
+            val user = UserInformation(name, address, email, phone)
 
-
-
-        binding.SaveInformation.setOnClickListener(View.OnClickListener {
-
-            name=binding.NameEdit.text.toString()
-            email=binding.EmailEdit.text.toString()
-            address=binding.AddressEdit.text.toString()
-            phone=binding.PhoneEdit.text.toString()
-
-            val newId=FirebaseAuth.getInstance().currentUser!!.uid
-            val user=UserInformation(name,address,email,phone)
-            database.child("user").child(newId).child("userInformation").setValue(user).addOnSuccessListener {
-                Toast.makeText(requireContext(),"Information Save",Toast.LENGTH_SHORT).show()
-            }
-                .addOnFailureListener(OnFailureListener {
-                    Toast.makeText(requireContext(),"Information Failed",Toast.LENGTH_SHORT).show()
-                })
-        })
-
+            // Save the data to Firebase under the user's node
+            database.child("user").child(userId).child("userInformation").setValue(user)
+                .addOnSuccessListener {
+                    Toast.makeText(requireContext(), "Information Saved", Toast.LENGTH_SHORT).show()
+                    disableEditing() // Disable fields after saving
+                }
+                .addOnFailureListener {
+                    Toast.makeText(requireContext(), "Information Failed", Toast.LENGTH_SHORT).show()
+                }
+        }
 
         return binding.root
     }
 
+    private fun loadUserData() {
+        val userId = auth.currentUser?.uid ?: return
+        database.child("user").child(userId).child("userInformation")
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+                        val user = snapshot.getValue(UserInformation::class.java)
+                        user?.let {
+                            // Populate EditTexts with data from Firebase
+                            binding.NameEdit.setText(it.name ?: "")
+                            binding.AddressEdit.setText(it.address ?: "")
+                            binding.EmailEdit.setText(it.email ?: "")
+                            binding.PhoneEdit.setText(it.phone ?: "")
+                        }
+                    } else {
+                        Toast.makeText(requireContext(), "No user data found", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT).show()
+                }
+            })
+    }
+    private fun toggleEditMode(isEditable: Boolean) {
+        binding.NameEdit.isEnabled = isEditable
+        binding.AddressEdit.isEnabled = isEditable
+        binding.EmailEdit.isEnabled = isEditable
+        binding.PhoneEdit.isEnabled = isEditable
+        binding.SaveInformation.isEnabled = isEditable
+
+        if (isEditable) {
+            // Request focus on the first editable field
+            binding.NameEdit.requestFocus()
+        }
+    }
+
+    // Disable editing (lock the fields and the save button)
+    private fun disableEditing() {
+        binding.NameEdit.isEnabled = false
+        binding.AddressEdit.isEnabled = false
+        binding.EmailEdit.isEnabled = false
+        binding.PhoneEdit.isEnabled = false
+        binding.SaveInformation.isEnabled = false
+    }
 
 }

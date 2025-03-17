@@ -2,6 +2,7 @@ package com.example.foodatdoor.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
@@ -10,18 +11,22 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.foodatdoor.R
 import com.example.foodatdoor.adapter.MenuAdapter
 import com.example.foodatdoor.databinding.FragmentSearchBinding
+import com.example.foodatdoor.model.MenuItem
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 
 class SearchFragment : Fragment() {
     lateinit var binding: FragmentSearchBinding
-    lateinit var adapter: MenuAdapter
-    val name= mutableListOf<String>("lkdjfk","lkdjfkldf","ldkjfkd","ldkjfkd","dfkd")
-    val image= mutableListOf<Int>(
-        R.drawable.foodicon,
-        R.drawable.foodlogo,
-        R.drawable.foodicon,
-        R.drawable.foodlogo,
-        R.drawable.foodicon
-    )
+    lateinit var list:MutableList<MenuItem>
+    lateinit var auth:FirebaseAuth
+    lateinit var originalList:MutableList<MenuItem>
+    lateinit var adapter:MenuAdapter
+    lateinit var database: DatabaseReference
+    private lateinit var filteredList: MutableList<MenuItem>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -32,73 +37,63 @@ class SearchFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         binding= FragmentSearchBinding.inflate(inflater, container, false)
 
+        auth=FirebaseAuth.getInstance()
+        database=FirebaseDatabase.getInstance().reference
+
         binding.SearchRec.layoutManager= LinearLayoutManager(requireContext())
+        list = mutableListOf()
+        originalList = mutableListOf()
+        filteredList = mutableListOf()
+        adapter=MenuAdapter(list,requireContext())
+        binding.SearchRec.adapter = adapter
 
-        /*adapter=MenuAdapter(name,image,requireContext())
-        binding.SearchRec.adapter=adapter*/
-
-        hereSearch()
-        showAllItems()
+        loadMenuItems()
+        setupSearchView()
 
 
         return binding.root
     }
-
-    public fun hereSearch() {
-        binding.SearchVies.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String): Boolean {
-                if (!query.isNullOrEmpty()) {
-                    filter(query)
-                } else {
-                    showAllItems()
+    private fun loadMenuItems() {
+        database.child("menu").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                list.clear()
+                originalList.clear()
+                for (data in snapshot.children) {
+                    val item = data.getValue(MenuItem::class.java)
+                    item?.let { list.add(it)
+                        originalList.add(it)}
                 }
+                filteredList.clear()
+                filteredList.addAll(list)
+                adapter.notifyDataSetChanged()
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+    private fun setupSearchView() {
+        binding.SearchVies.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                filter(query)
                 return true
             }
 
-            override fun onQueryTextChange(textsubject: String): Boolean {
-                if (textsubject.isNullOrEmpty()) {
-                    showAllItems()  // Reset to original data if query is empty
-                } else {
-                    filter(textsubject)  // Filter data based on query
-                }
+            override fun onQueryTextChange(newText: String?): Boolean {
+                filter(newText)
                 return true
             }
         })
     }
-    public fun showAllItems(){
-        name.clear()
-        image.clear()
 
-        name.addAll(mutableListOf("lkdjfk", "lkdjfkldf", "ldkjfkd", "ldkjfkd", "dfkd"))
-        image.addAll(mutableListOf(
-            R.drawable.foodicon,
-            R.drawable.foodlogo,
-            R.drawable.foodicon,
-            R.drawable.foodlogo,
-            R.drawable.foodicon
-        ))
-    }
-    public fun filter(query:String) {
-        val filteredNames = mutableListOf<String>()
-        val filteredImages = mutableListOf<Int>()
-
-        // Filter the items based on the query
-        name.forEachIndexed { index, s ->
-            if (s.contains(query, ignoreCase = true)) {
-                filteredNames.add(s)
-                filteredImages.add(image[index])  // Add the corresponding image
-            }
+    private fun filter(query: String?) {
+        val filteredList = if (query.isNullOrEmpty()) {
+            originalList
+        } else {
+            originalList.filter { it.foodName?.lowercase()?.contains(query.lowercase().trim()) == true }
         }
-
-        // Clear the original lists and update with filtered data
-        name.clear()
-        image.clear()
-        name.addAll(filteredNames)
-        image.addAll(filteredImages)
-
-        //adapter.notifyDataSetChanged()
+        adapter.updateList(filteredList)
     }
 }

@@ -11,7 +11,7 @@ import com.example.foodatdoor.DetailsActivity
 import com.example.foodatdoor.databinding.MenuItemBinding
 import com.example.foodatdoor.model.MenuItem
 
-class MenuAdapter(private var list:List<MenuItem>,private val context:Context): RecyclerView.Adapter<MenuAdapter.viewHolder>() {
+class MenuAdapter(private var list:MutableList<MenuItem>,private val context:Context): RecyclerView.Adapter<MenuAdapter.viewHolder>() {
     class viewHolder(val binding:MenuItemBinding): RecyclerView.ViewHolder(binding.root) {
 
     }
@@ -41,5 +41,11 @@ class MenuAdapter(private var list:List<MenuItem>,private val context:Context): 
             intent.putExtra("ingredent",lists.foodMenu)
             context.startActivity(intent)
         })
+    }
+    // Function to update the list dynamically
+    fun updateList(newList: List<MenuItem>) {
+        list.clear()
+        list.addAll(newList)
+        notifyDataSetChanged() // Refresh RecyclerView
     }
 }

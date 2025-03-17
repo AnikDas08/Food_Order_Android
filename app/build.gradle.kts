@@ -55,8 +55,14 @@ dependencies {
     implementation ("com.github.denzcoskun:ImageSlideshow:0.1.2")
     implementation ("com.github.bumptech.glide:glide:4.16.0")
 
+    implementation ("com.orhanobut:dialogplus:1.11@aar")
+
     implementation(platform("com.google.firebase:firebase-bom:32.7.1"))
     implementation("com.google.firebase:firebase-auth")
+    implementation ("com.github.uddoktapay:UddoktaPayAndroidSDK:ultra.2.0")
+    implementation ("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
+
+
 
 
 }

@@ -1,9 +1,9 @@
 package com.example.foodatdoor.model
 
 data class UserInformation(
-    val name:String?,
-    val address:String?,
-    val email:String?,
-    val phone:String?
+    val name:String?=null,
+    val address:String?=null,
+    val email:String?=null,
+    val phone:String?=null
 )
 
